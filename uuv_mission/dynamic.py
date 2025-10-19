@@ -2,6 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+from pathlib import Path
 from .terrain import generate_reference_and_limits
 
 class Submarine:
@@ -70,13 +72,33 @@ class Mission:
 
     @classmethod
     def random_mission(cls, duration: int, scale: float):
-        (reference, cave_height, cave_depth) = generate_reference_and_limits(duration, scale)
+        reference, cave_height, cave_depth = generate_reference_and_limits(duration, scale)
         return cls(reference, cave_height, cave_depth)
 
     @classmethod
-    def from_csv(cls, file_name: str):
-        # You are required to implement this method
-        pass
+    def from_csv(cls, filename: str = "data/mission.csv"):
+        """
+        Load mission.csv and return a Mission instance.
+        Expects columns: reference, cave_height, cave_depth.
+        """
+        from pathlib import Path
+        import pandas as pd
+
+        path = Path(filename)
+        if not path.exists():
+            raise FileNotFoundError(f"Cannot find {filename} at {path.resolve()}")
+
+        df = pd.read_csv(path)
+        required = {"reference", "cave_height", "cave_depth"}
+        if not required.issubset(df.columns):
+            raise ValueError(f"{filename} must have columns: {sorted(required)}")
+
+        return cls(
+            reference=df["reference"].to_numpy(),
+            cave_height=df["cave_height"].to_numpy(),
+            cave_depth=df["cave_depth"].to_numpy(),
+        )
+
 
 
 class ClosedLoop:
